@@ -128,12 +128,17 @@ onMounted(async () => {
 
     <div class="columns">
       <div class="column is-one-quarter">
-
+        <SidePanel @filterBySearch="filterNewsBySearch" />
       </div>
 
 
       <div class="column post-column is-three-fifths">
+        <div class="card-container">
+          <div v-if="isLoading" class="custom-loader"></div>
+          <Post v-for="newsData in news" :key="newsData.url" :data="newsData" v-else-if="filteredNews.length === 0" />
+          <Post v-for="newsData, index in filteredNews" :key="index" :data="newsData" v-else />
 
+        </div>
       </div>
       <div class="column">
       </div>
