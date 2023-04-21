@@ -1,7 +1,5 @@
 <template>
-  <div>
-    Hello world
-  </div>
+  News app
 </template>
 
 <script setup>
