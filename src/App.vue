@@ -1,6 +1,6 @@
 <template>
   <div>
-    News App
+    Hello world
   </div>
 </template>
 
