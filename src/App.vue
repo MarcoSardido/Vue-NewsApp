@@ -1,14 +1,11 @@
 <script setup>
-import { handleError, onMounted, reactive, ref, toRefs, computed, watch } from 'vue';
+import { handleError, onMounted, reactive, ref, toRefs, watch } from 'vue';
 import axios from 'axios'
 import Navbar from './components/Navbar.vue'
 import Post from './components/Post.vue'
-import SidePanel from './components/SidePanel.vue';
-
-// News API Key
-const apiKey = import.meta.env.VITE_NEWS_API_KEY
 
 const isLoading = ref(true)
+const apiKey = import.meta.env.VITE_NEWS_API_KEY // News API Key
 const state = reactive({
   news: [],
   filteredNews: []
@@ -16,48 +13,32 @@ const state = reactive({
 const { news, filteredNews } = toRefs(state)
 
 const dateFormat = (dateString) => {
-  const date = new Date(dateString)
-  const formattedDate = date.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-  const formattedTime = date.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric' });
+    const date = new Date(dateString)
+    const formattedDate = date.toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+    const formattedTime = date.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric' });
 
-  return `${formattedTime} - ${formattedDate}`
+    return `${formattedTime} - ${formattedDate}`
 }
-
 
 watch(() => !isLoading.value, (newVal, oldVal) => {
   if (!newVal) return
 
-  const newNewsFormat = []
+  const formattedData = []
   if (state.filteredNews.length > 0) {
     for (const data of state.filteredNews) {
-      newNewsFormat.push({
-        title: data.title,
-        author: data.author,
-        publishedAt: dateFormat(data.publishedAt),
-        source: data.source,
-        title: data.title,
-        url: data.url
-      })
+      formattedData.push({...data, publishedAt: dateFormat(data.publishedAt)})
     }
-    state.filteredNews = newNewsFormat
+    state.filteredNews = formattedData
   } else {
     for (const data of state.news) {
-      newNewsFormat.push({
-        title: data.title,
-        author: data.author,
-        publishedAt: dateFormat(data.publishedAt),
-        source: data.source,
-        title: data.title,
-        url: data.url
-      })
+      formattedData.push({...data, publishedAt: dateFormat(data.publishedAt)})
     }
-    state.news = newNewsFormat
+    state.news = formattedData
   }
-
 })
 
 const filterNewsByCountry = async (countryCode) => {
@@ -109,7 +90,7 @@ onMounted(async () => {
   try {
     const res = await axios.get(`https://newsapi.org/v2/top-headlines?country=ph&pageSize=20&apiKey=${apiKey}`)
     state.news = res.data.articles
-    isLoading.value = false
+    isLoading.value = false;
   } catch (error) {
     switch (error.res?.status) {
       case 400: break;
@@ -123,27 +104,12 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <Navbar @filterByCountry="filterNewsByCountry" />
-  <div class="container">
-
-    <div class="columns">
-      <div class="column is-one-quarter">
-        <SidePanel @filterBySearch="filterNewsBySearch" />
-      </div>
-
-
-      <div class="column post-column is-three-fifths">
-        <div class="card-container">
-          <div v-if="isLoading" class="custom-loader"></div>
-          <Post v-for="newsData in news" :key="newsData.url" :data="newsData" v-else-if="filteredNews.length === 0" />
-          <Post v-for="newsData, index in filteredNews" :key="index" :data="newsData" v-else />
-
-        </div>
-      </div>
-      <div class="column">
-      </div>
-    </div>
-
+  <Navbar @filterByCountry="filterNewsByCountry" @filterBySearch="filterNewsBySearch" />
+  
+  <div class="container content">
+    <div v-if="isLoading" class="custom-loader"></div>
+    <Post :data="news" v-else-if="filteredNews.length === 0" />
+    <Post :data="filteredNews" v-else />
   </div>
 </template>
 <style>
@@ -153,35 +119,24 @@ onMounted(async () => {
   height: auto;
 }
 
-.post-column {
-  display: flex;
-  justify-content: center;
-}
-
-.card-container {
-  max-height: 75vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.card-container::-webkit-scrollbar {
-  display: none;
-}
-
 /* Loaders */
 .custom-loader {
-  width: 25px;
-  height: 25px;
-  margin-top: 10rem;
-  border-radius: 50%;
-  background: conic-gradient(#0000 10%, #485fc7);
-  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 4px), #000 0);
-  animation: s3 1s infinite linear;
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width: 25px;
+    height: 25px;
+    margin-top: 10rem;
+    border-radius: 50%;
+    background: conic-gradient(#0000 10%, #485fc7);
+    -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 4px), #000 0);
+    animation: s3 1s infinite linear;
 }
 
 @keyframes s3 {
-  to {
-    transform: rotate(1turn)
-  }
+    to {
+        transform: rotate(1turn)
+    }
 }
 </style>
